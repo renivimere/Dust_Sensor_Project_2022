@@ -205,3 +205,46 @@ After processing, the program will also save the runtime parameters into the `du
 - **Sorting algorithm bubble [ms]:** the time taken to perform the Bubble Sort Algorithm, measured in milliseconds.
 - **Sorting algorithm selection [ms]:** the time taken to perform the Selection Sort Algorithm, measured in milliseconds.
 
+**3. From Text to Hex Conversion**
+
+#### Command-line Usage
+
+Users are required to execute the program from the command line using the following format:
+
+```console
+dust_convert [data_filename.csv] [hex_filename.dat]
+```
+
+Where:
+- **`dust_convert`** is the compiled program filename.
+- **`[data_filename.csv]`** is the input file in CSV format, following the structure of the `dust_aqi.csv` file generated in Task 2.
+- **`[hex_filename.dat]`** is the output file in text format with the extension `.dat`.
+- **If the user enters an incorrect syntax, provides insufficient parameters, or uses an invalid command, the program will report an error and log the error code into the "**dust_convert_error.log**" file as `Error 01: invalid command`.**
+- **If the input or output files do not exist, or if the file exists but is not accessible, the program will report an error and log the error code into the `dust_convert_error.log` file as `Error 02: denied access FILENAME`, where FILENAME is replaced with the inaccessible file name.**
+- **If the input or output files do not adhere to the specified format, meaning they do not have the required extensions (.csv or .dat), the program will not execute and will report an error into the `dust_convert_error.log` file as `Error 03: invalid file format`.**
+
+#### Data Conversion
+
+- If the user provides a valid command and a valid input file, the program will execute and read each line of the input CSV file. 
+
+- **If there are any data errors (such as empty fields, invalid data, or format discrepancies compared to the `dust_aqi.csv` file in Task 2), the program will skip that line and continue execution, logging the error into the `dust_convert_error.log` file with error code `Error 06: invalid data packet at line X`, where X is the line number in the input file (with the header line considered as line 0, and subsequent lines incremented by one)**. 
+
+- If no data errors occur, the program will convert the data into packet form, with each packet represented as a byte string, and write each packet to a separate line in the output DAT file.
+
+- **In case duplicate data is found in two lines, the program will only output one line and log the error into the `dust_convert_error.log` file with error code `Error 05: duplicated data at lines X1, X2`, where X1 and X2 are the line numbers in the input file.**
+
+Each byte string consists of 15 bytes, with each byte separated by a space. The bytes are represented in hexadecimal format as follows:
+- **Start byte:** Always `0x00`.
+- **Packet length:** Represents the length of the packet, including the start byte and stop byte, with a value of `0x0F`.
+- **Sensor ID:** An identifier greater than 0.
+- **Time:**  4 bytes representing the measurement timestamp in Unix time format.
+- **PM2.5 concentration:** A 4-byte floating-point value according to IEEE754 standard.
+- **AQI:** A 2-byte integer representing the Air Quality Index.
+- **Checksum:** A byte for verifying the accuracy of the packet data, calculated as the 2's complement of the least significant byte of the sum of packet length, sensor ID, time, PM2.5 concentration, and AQI.
+- **Stop byte:** Always `0xFF`.
+
+After processing, the program will also save the runtime parameters into the `dust_convert_run.log` file. The information to be saved includes:
+- **Total number of rows:** the total number of rows in the input file, excluding empty rows.
+- **Successfully converted rows:** the number of rows containing valid data that were successfully converted (including duplicate rows).
+- **Error rows:** the number of rows containing invalid data (excluding duplicate rows).
+
