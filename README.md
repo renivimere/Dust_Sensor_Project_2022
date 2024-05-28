@@ -50,7 +50,7 @@ If the user provides a valid command, the program will execute and generate a da
 - The simulated data will be saved to a file named `dust_sensor.csv`. If the file already exists, it will overwrite the existing file. The file follows the CSV format, where fields are separated by commas.
 - **If the program encounters an error while attempting to overwrite an existing file named `dust_sensor.csv`, it will log the error into `task1.log` as `Error 03: denied access dust_sensor.csv`.**
 
-### Task 2: Data Processing Program
+### [Task 2: Data Processing Program](/task_2)
 
 This program is designed to process data obtained from dust sensors. It performs various operations on the input data to filter outliers, calculate average dust concentrations, convert them to Air Quality Index (AQI), and provide pollution level warnings.
 
@@ -72,6 +72,77 @@ Where:
 
 - **If the input file `data_filename.csv` does not have the extension CSV or does not have the same format as the `dust_sensor.csv` file in Task 1 as specified, the program will log an error into `task2.log` with error code `Error 02: invalid csv file`.**
 
+#### Data Processing
 
+Upon receiving a valid command and a valid input file, the program will proceed with data processing. Here's how the processing will be done:
+
+1. **Data Validation and Error Handling:**
+   - The program will read each line of the input CSV file.
+   - If there are any data errors (such as empty fields or invalid data), the program will terminate and log errors into `task2.log` with appropriate error codes:
+     - `Error 02: invalid csv file`
+     - `Error 03: data is missing at line X` (X represents the line number with the error)
+
+2. **Capacity Limitation:**
+   - The program can handle up to 10000 data points, corresponding to 10000 lines in the input file.
+
+3. **Outlier Removal:**
+   - Values outside the range from 5 to 550.5 𝜇𝑔/𝑚³ will be filtered out.
+   - Filtered values will be saved into a file named `dust_outliers.csv`.
+   - **If `dust_outliers.csv` exists but doesn't allow overwriting, an error will be logged into `task2.log` as "Error 04: denied access dust_outliers.csv".**
+
+4. **Data Processing:**
+   - Valid measurements will be utilized to calculate the average dust concentration per hour for each sensor.
+   - The concentrations will be converted to Air Quality Index (AQI) values and pollution level warnings will be provided based on a predefined table.
+   - Processed data will be saved to the file `dust_aqi.csv`.
+   - **If `dust_aqi.csv` already exists but doesn't allow overwriting, an error will be logged into `task2.log` as `Error 05: denied access dust_aqi.csv`.**
+
+5. **Data Aggregation and Statistics:**
+   - Based on the average values, the program will aggregate and summarize the total number of hours at each pollution level detected by the sensor nodes.
+   - The results will be saved to a file named `dust_statistics.csv`.
+   - **If `dust_statistics.csv` already exists but doesn't allow overwriting, an error will be logged into `task2.log` as `Error 06: denied access dust_statistics.csv`.**
+
+6. **Summary Calculation:**
+   - The program will determine the maximum (max), minimum (min), and average dust concentration values measured at each sensor node throughout the simulation period.
+   - The results will be saved to a file named `dust_summary.csv`.
+   - The corresponding timestamps for the maximum and minimum values in the file will indicate the earliest time these values appeared in the input file.
+   - The timestamp corresponding to the mean value represents the simulated duration measured in hours.
+   - **If `dust_summary.csv` already exists but doesn't allow overwriting, an error will be logged into `task2.log` as `Error 07: denied access dust_summary.csv`.**
+  
+### [Task 3: Data Conversion Program](/task_3)
+
+#### Command-line Usage
+
+Users are required to execute the program from the command line using the following format:
+
+```console
+dust_convert [data_filename.csv] [hex_filename.dat]
+```
+
+Where:
+- **`dust_convert`** is the compiled program filename.
+- **`[data_filename.csv]`** is the input file in CSV format, following the structure of the `dust_aqi.csv` file generated in Task 2.
+- **`[hex_filename.dat]`** is the output file in text format with the extension `.dat`.
+- **If the user enters an incorrect command syntax, the program will not execute and will log an error into `task3.log` with error code `Error 00: invalid command`.**
+- **If the input file `data_filename.csv` does not exist or exists but cannot be accessed, the program will log an error into `task3.log` with error code `Error 01: file not found or cannot be accessed`.**
+- **If the input file `data_filename.csv` does not have the extension CSV or does not have the same format as the `dust_aqi.csv` file generated in Task 2, the program will log an error into `task3.log` with error code `Error 02: invalid csv file`.**
+- **If the output file `hex_filename.dat` already exists and does not allow overwriting, the program will log an error into `task3.log` as `Error 04: cannot override hex_filename.dat`.**
+
+#### Data Conversion
+
+- If the user provides a valid command and a valid input file, the program will execute and read each line of the input CSV file. 
+
+- **If there are any data errors (such as empty fields, invalid data, or format discrepancies compared to the `dust_aqi.csv` file in Task 2), the program will terminate and log errors into `task3.log` with the error code `Error 02: invalid csv file` and `Error 03: data is missing at line X`, where X represents the line number in the input file (with the header line considered as line 0, and subsequent lines incremented by one)**. 
+
+- If no data errors occur, the program will convert the data into packet form, with each packet represented as a byte string, and write each packet to a separate line in the output DAT file.
+
+Each byte string consists of 15 bytes, with each byte separated by a space. The bytes are represented in hexadecimal format as follows:
+- **Start byte:** Always `0x00`.
+- **Packet length:** Represents the length of the packet, including the start byte and stop byte, with a value of `0x0F`.
+- **Sensor ID:** An identifier greater than 0.
+- **Time:**  4 bytes representing the measurement timestamp in Unix time format.
+- **PM2.5 concentration:** A 4-byte floating-point value according to IEEE754 standard.
+- **AQI:** A 2-byte integer representing the Air Quality Index.
+- **Checksum:** A byte for verifying the accuracy of the packet data, calculated as the 2's complement of the least significant byte of the sum of packet length, sensor ID, time, PM2.5 concentration, and AQI.
+- **Stop byte:** Always `0xFF`.
 
 
